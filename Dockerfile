@@ -1,7 +1,5 @@
-ARG PROJECT_ID=speak-2-dev
-
 # Use our own prebuilt docker image
-FROM gcr.io/$PROJECT_ID/speak-api-base
+FROM gcr.io/speak-2-dev/speak-api-base
 
 # Copy application code.
 COPY . /app/

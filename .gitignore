@@ -77,6 +77,3 @@ typings/
 
 # Ignore built ts files
 dist/**/*
-
-# Ignore apidoc
-src/public

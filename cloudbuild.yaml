@@ -1,14 +1,14 @@
 steps:
     # npm install
     - id: npm-install
-      name: gcr.io/$PROJECT_ID/speak-api-base
+      name: gcr.io/speak-2-dev/speak-api-base
       entrypoint: npm
       args:
           - install
           - --include=dev
     # npm build
     - id: npm-build
-      name: gcr.io/$PROJECT_ID/speak-api-base
+      name: gcr.io/speak-2-dev/speak-api-base
       entrypoint: npm
       args:
           - run
@@ -18,24 +18,22 @@ steps:
       name: gcr.io/cloud-builders/docker
       args:
           - build
-          - --build-arg
-          - PROJECT_ID=$PROJECT_ID
           - --tag
-          - gcr.io/$PROJECT_ID/speak-api:$SHORT_SHA
+          - gcr.io/speak-2-dev/speak-api:$SHORT_SHA
           - .
     # Push the container image
     - id: docker-push
       name: gcr.io/cloud-builders/docker
       args:
           - push
-          - gcr.io/$PROJECT_ID/speak-api:$SHORT_SHA
+          - gcr.io/speak-2-dev/speak-api:$SHORT_SHA
     # Deploy the container image to GKE - API
     - id: docker-deploy-api
       name: gcr.io/cloud-builders/gke-deploy
       args:
           - run
           - --filename=kubernetes-api.yaml
-          - --image=gcr.io/$PROJECT_ID/speak-api:$SHORT_SHA
+          - --image=gcr.io/speak-2-dev/speak-api:$SHORT_SHA
           - --location=${_LOCATION}
           - --cluster=${_CLUSTER}
           - --output=output-api

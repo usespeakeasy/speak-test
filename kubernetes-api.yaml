@@ -20,7 +20,7 @@ spec:
         spec:
             containers:
                 - name: speak-test-1
-                  image: gcr.io/{{PROJECT_ID}}/speak-test
+                  image: gcr.io/speak-2-dev/speak-test
                   imagePullPolicy: IfNotPresent
                   resources:
                       requests:
