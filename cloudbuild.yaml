@@ -5,7 +5,7 @@ steps:
       entrypoint: npm
       args:
           - install
-          - --also=dev
+          - --include=dev
     # npm build
     - id: npm-build
       name: gcr.io/$PROJECT_ID/speak-api-base

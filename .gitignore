@@ -80,10 +80,3 @@ dist/**/*
 
 # Ignore apidoc
 src/public
-
-# Ignore custom files
-*.pgsql
-*.txt
-*.json
-*.csv
-!nodemon.json
