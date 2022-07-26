@@ -1,0 +1,127 @@
+steps:
+    # npm install
+    - id: npm-install
+      name: gcr.io/$PROJECT_ID/speak-api-base
+      entrypoint: npm
+      args:
+          - install
+          - --production=false
+    # Create env file
+    - id: create-env
+      name: gcr.io/$PROJECT_ID/speak-api-base
+      entrypoint: npm
+      args:
+          - run
+          - create-env
+      env:
+          - ENV=${_ENV}
+          - NODE_ENV=${_NODE_ENV}
+          - PORT=${_PORT}
+          - HOST=${_HOST}
+          - DATABASE_URL=${_DATABASE_URL}
+          - API_KEY=${_API_KEY}
+          - APP_URL=${_APP_URL}
+          - WORKER_URL=${_WORKER_URL}
+          - AWS_ACCESS_KEY=${_AWS_ACCESS_KEY}
+          - AWS_SECRET_ACCESS_KEY=${_AWS_SECRET_ACCESS_KEY}
+          - AWS_REGION=${_AWS_REGION}
+          - AWS_BUCKET_NAME=${_AWS_BUCKET_NAME}
+          - APPLE_SECRET=${_APPLE_SECRET}
+          - FIREBASE_PROJECT_ID=${_FIREBASE_PROJECT_ID}
+          - FIREBASE_PRIVATE_KEY=${_FIREBASE_PRIVATE_KEY}
+          - FIREBASE_CLIENT_EMAIL=${_FIREBASE_CLIENT_EMAIL}
+          - FIREBASE_DATABASE_URL=${_FIREBASE_DATABASE_URL}
+          - FIREBASE_DB_VERSION=${_FIREBASE_DB_VERSION}
+          - PADDLE_PUBLIC_KEY=${_PADDLE_PUBLIC_KEY}
+          - PADDLE_URL=${_PADDLE_URL}
+          - PADDLE_VENDOR_ID=${_PADDLE_VENDOR_ID}
+          - PADDLE_VENDOR_AUTH_CODE=${_PADDLE_VENDOR_AUTH_CODE}
+          - SENDGRID_API_KEY=${_SENDGRID_API_KEY}
+          - SEGMENT_WRITE_KEY=${_SEGMENT_WRITE_KEY}
+          - FRONT_API=${_FRONT_API}
+          - GOOGLE_API_KEY=${_GOOGLE_API_KEY}
+          - RC_API_KEY=${_RC_API_KEY}
+          - TOSS_PARTNER_ID=${_TOSS_PARTNER_ID}
+          - TOSS_PARTNER_SECRET=${_TOSS_PARTNER_SECRET}
+          - SWEETTRACKER_URL=${_SWEETTRACKER_URL}
+          - SWEETTRACKER_KEY=${_SWEETTRACKER_KEY}
+          - CUSTOMERIO_TOKEN=${_CUSTOMERIO_TOKEN}
+          - CUSTOMERIO_API=${_CUSTOMERIO_API}
+          - KAKAO_REST_API_KEY=${_KAKAO_REST_API_KEY}
+          - KAKAO_OAUTH_REDIRECT_URI=${_KAKAO_OAUTH_REDIRECT_URI}
+          - SPLIT_USER_API_KEY=${_SPLIT_USER_API_KEY}
+          - DICTIONARY_API_KEY=${_DICTIONARY_API_KEY}
+          - PAYCO_ENCRYPT_KEY=${_PAYCO_ENCRYPT_KEY}
+          - PAYCO_ENCRYPT_IV=${_PAYCO_ENCRYPT_IV}
+          - PAYCO_CLIENT_ID=${_PAYCO_CLIENT_ID}
+          - PAYCO_CLIENT_SECRET=${_PAYCO_CLIENT_SECRET}
+          - INTERCOM_CLIENT_SECRET=${_INTERCOM_CLIENT_SECRET}
+          - KAKAO_ADMIN_API_KEY=${_KAKAO_ADMIN_API_KEY}
+    # Generate prisma artifacts
+    - id: prisma-generate
+      name: gcr.io/$PROJECT_ID/speak-api-base
+      entrypoint: npm
+      args:
+          - run
+          - db-generate
+    # Download proxy to access Cloud SQL
+    - id: proxy-install
+      name: gcr.io/$PROJECT_ID/speak-api-base
+      entrypoint: /bin/sh
+      args:
+          - -c
+          - wget -O /workspace/cloud_sql_proxy https://storage.googleapis.com/cloudsql-proxy/v1.16/cloud_sql_proxy.linux.386 &&  chmod +x /workspace/cloud_sql_proxy
+    # Run migration through proxy
+    - id: prisma-migrate
+      name: gcr.io/$PROJECT_ID/speak-api-base
+      timeout: 300s
+      entrypoint: /bin/sh
+      env:
+          - DATABASE_URL=${_PROXY_DB_URL}
+      args:
+          - -c
+          - (/workspace/cloud_sql_proxy -dir=/workspace -instances=${_DB_INSTANCE} & sleep 2) && npm run db-migrate
+    # npm build
+    - id: npm-build
+      name: gcr.io/$PROJECT_ID/speak-api-base
+      entrypoint: npm
+      args:
+          - run
+          - build
+    # Build the container image
+    - id: docker-build
+      name: gcr.io/cloud-builders/docker
+      args:
+          - build
+          - --build-arg
+          - PROJECT_ID=$PROJECT_ID
+          - --tag
+          - gcr.io/$PROJECT_ID/speak-api:$SHORT_SHA
+          - .
+    # Push the container image
+    - id: docker-push
+      name: gcr.io/cloud-builders/docker
+      args:
+          - push
+          - gcr.io/$PROJECT_ID/speak-api:$SHORT_SHA
+    # Update kubernetes.yaml config with the PROJECT_ID variable
+    - id: update-config
+      name: gcr.io/cloud-builders/gcloud
+      entrypoint: /bin/sh
+      args:
+          - -c
+          - sed -i "s/{{PROJECT_ID}}/$PROJECT_ID/g" kubernetes-api.yaml && sed -i "s/{{PROJECT_ID}}/$PROJECT_ID/g" kubernetes-worker.yaml
+    # Deploy the container image to GKE - API
+    - id: docker-deploy-api
+      name: gcr.io/cloud-builders/gke-deploy
+      waitFor:
+          - update-config
+      args:
+          - run
+          - --filename=kubernetes-api.yaml
+          - --image=gcr.io/$PROJECT_ID/speak-api:$SHORT_SHA
+          - --location=${_LOCATION}
+          - --cluster=${_CLUSTER}
+          - --output=output-api
+          - --timeout=10m
+timeout: 1200s

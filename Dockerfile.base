@@ -1,0 +1,38 @@
+# Google cloud base image upload instructions taken from:
+# https://medium.com/bb-tutorials-and-thoughts/gcp-deploying-angular-app-with-nodejs-api-on-gke-autopilot-345723318899
+
+# NodeJS docker image
+FROM ubuntu:20.04
+
+# Add ability to use `apt-add-repository` and `wget`
+RUN apt-get update \
+    && apt-get install -y software-properties-common wget gnupg curl python2
+
+# Fetch NodeJS
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash
+
+# Add repositories for needed packages
+RUN apt-add-repository -y ppa:chris-needham/ppa
+
+RUN apt-get -y update \
+    && apt-get install -y \
+      nodejs \
+      ffmpeg \
+      audiowaveform
+
+# Install Pip
+RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+RUN python2 get-pip.py
+# Install Python dependencies
+RUN pip2 install unicodecsv chardet enum34
+
+# Cleanup
+RUN apt-get clean
+
+# Set common env vars
+ENV NODE_ENV production
+ENV PORT 8080
+
+WORKDIR /app
+
+CMD ["npm"]

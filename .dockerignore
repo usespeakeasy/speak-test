@@ -1,0 +1,16 @@
+# Git
+.git
+.gitignore
+
+# Node.js dependencies:
+src/
+scripts/
+
+# Editors:
+.vscode
+
+# Configs
+.eslintrc.js
+nodemon.json
+tsconfig.json
+README.md
