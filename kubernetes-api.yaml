@@ -2,12 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
     labels:
-        app: speak-api-test
-    name: speak-api-test
+        app: speak-test
+    name: speak-test
 spec:
     selector:
         matchLabels:
-            app: speak-api-test
+            app: speak-test
     strategy:
         rollingUpdate:
             maxSurge: 25%
@@ -16,11 +16,11 @@ spec:
     template:
         metadata:
             labels:
-                app: speak-api-test
+                app: speak-test
         spec:
             containers:
-                - name: speak-api-test-1
-                  image: gcr.io/{{PROJECT_ID}}/speak-api-test
+                - name: speak-test-1
+                  image: gcr.io/{{PROJECT_ID}}/speak-test
                   imagePullPolicy: IfNotPresent
                   resources:
                       requests:
@@ -66,15 +66,15 @@ apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
 metadata:
     labels:
-        app: speak-api-test
-    name: speak-api-test-hpa-hktn
+        app: speak-test
+    name: speak-test-hpa-hktn
 spec:
     minReplicas: 2
     maxReplicas: 200
     scaleTargetRef:
         apiVersion: apps/v1
         kind: Deployment
-        name: speak-api-test
+        name: speak-test
     metrics:
         - type: Resource
           resource:
