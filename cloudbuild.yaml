@@ -19,21 +19,21 @@ steps:
       args:
           - build
           - --tag
-          - gcr.io/speak-2-dev/speak-api:$SHORT_SHA
+          - gcr.io/speak-2-dev/speak-test:$SHORT_SHA
           - .
     # Push the container image
     - id: docker-push
       name: gcr.io/cloud-builders/docker
       args:
           - push
-          - gcr.io/speak-2-dev/speak-api:$SHORT_SHA
+          - gcr.io/speak-2-dev/speak-test:$SHORT_SHA
     # Deploy the container image to GKE - API
-    - id: docker-deploy-api
+    - id: docker-deploy
       name: gcr.io/cloud-builders/gke-deploy
       args:
           - run
           - --filename=kubernetes-api.yaml
-          - --image=gcr.io/speak-2-dev/speak-api:$SHORT_SHA
+          - --image=gcr.io/speak-2-dev/speak-test:$SHORT_SHA
           - --location=${_LOCATION}
           - --cluster=${_CLUSTER}
           - --output=output-api
